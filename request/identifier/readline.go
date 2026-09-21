@@ -1,8 +1,9 @@
-package readLine
+package identifier
 
 import (
 	"bytes"
 	"io"
+	"strings"
 )
 
 type LineReader struct {
@@ -23,7 +24,7 @@ func (lr *LineReader) Read() (string, error) {
 			line := string(lr.buffer[:index])
 
 			lr.buffer = lr.buffer[index+1:]
-
+			line = strings.TrimSuffix(line, "\r")
 			return line, nil
 		}
 
