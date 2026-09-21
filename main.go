@@ -34,6 +34,7 @@ func main() {
 
 	fmt.Println("Method:", req.RequestLine.Method)
 	fmt.Println("Path:", req.RequestLine.Path)
+	fmt.Println("body:", string(req.Body))
 
 	for _, h := range req.Headers {
 		fmt.Println(h.Name, "=", h.Value)

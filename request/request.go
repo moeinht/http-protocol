@@ -1,6 +1,7 @@
 package request
 
 import (
+	"http-protocol/request/body"
 	"http-protocol/request/header"
 	"http-protocol/request/identifier"
 	requestline "http-protocol/request/request-line"
@@ -14,17 +15,17 @@ type Request struct {
 }
 
 type Parser struct {
-	lineReader *identifier.LineReader
+	lineReader *identifier.BufferedReader
 }
 
 func NewParser(reader io.Reader) *Parser {
 	return &Parser{
-		lineReader: identifier.NewLineReader(reader),
+		lineReader: identifier.NewBufferedReader(reader),
 	}
 }
 
 func (p *Parser) ParseRequestLine() (requestline.RequestLine, error) {
-	line, err := p.lineReader.Read()
+	line, err := p.lineReader.ReadLine()
 	if err != nil {
 		return requestline.RequestLine{}, err
 	}
@@ -36,7 +37,7 @@ func (p *Parser) ParseHeaders() ([]header.Header, error) {
 	headers := []header.Header{}
 
 	for {
-		line, err := p.lineReader.Read()
+		line, err := p.lineReader.ReadLine()
 		if err != nil {
 			return nil, err
 		}
@@ -55,6 +56,22 @@ func (p *Parser) ParseHeaders() ([]header.Header, error) {
 	}
 }
 
+func (p *Parser) ParseBody(headers []header.Header) ([]byte, error) {
+	contentLength, err := body.FindContentLength(headers)
+
+	if err != nil {
+		return nil, nil
+	}
+
+	body, err := p.lineReader.ReadN(contentLength)
+
+	if err != nil {
+		return nil, nil
+	}
+
+	return body, nil
+}
+
 func (p *Parser) Parse() (Request, error) {
 	requestLine, err := p.ParseRequestLine()
 	if err != nil {
@@ -66,8 +83,15 @@ func (p *Parser) Parse() (Request, error) {
 		return Request{}, err
 	}
 
+	body, err := p.ParseBody(headers)
+
+	if err != nil {
+		return Request{}, err
+	}
+
 	return Request{
 		RequestLine: requestLine,
 		Headers:     headers,
+		Body:        body,
 	}, nil
 }
