@@ -19,12 +19,20 @@ func main() {
 
 	defer l.Close()
 
-	con, err := l.Accept()
+	for {
 
-	if err != nil {
-		log.Fatal(err)
+		con, err := l.Accept()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		go handleConnection(con)
+
 	}
+}
 
+func handleConnection(con net.Conn) {
 	defer con.Close()
 
 	parser := request.NewParser(con)
@@ -56,5 +64,6 @@ func main() {
 		panic(err)
 	}
 
-	con.Write(writerValue)
+	(con).Write(writerValue)
+
 }
