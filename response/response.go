@@ -5,12 +5,23 @@ import (
 	"http-protocol/response/setGenerateHeader"
 	statusline "http-protocol/response/status-line"
 	"strconv"
+	"strings"
 )
 
 type Response struct {
 	StatusLine statusline.ResponseLine
 	Headers    []header.Header
 	Body       []byte
+}
+
+func (rs *Response) GetHeader(name string) (string, bool) {
+	for _, h := range rs.Headers {
+		if strings.EqualFold(h.Name, name) {
+			return h.Value, true
+		}
+	}
+
+	return "", false
 }
 
 func (rs *Response) SetHeader(name string, value string) error {
