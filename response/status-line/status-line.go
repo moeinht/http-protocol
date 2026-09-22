@@ -11,7 +11,8 @@ const (
 	Created             = "Created"
 	NotFound            = "Not Found"
 	InternalServerError = "Internal Server Error"
-	NoResponse          = "NoResponse"
+	NoResponse          = "No Response"
+	BadRequest          = "Bad Request"
 )
 
 func SetStatuscode(code int) ResponseLine {
@@ -32,6 +33,9 @@ func SetStatuscode(code int) ResponseLine {
 	case 404:
 		responseLine.Reason = NotFound
 		responseLine.Status = 404
+	case 400:
+		responseLine.Reason = BadRequest
+		responseLine.Status = 400
 
 	case 500:
 		responseLine.Reason = InternalServerError

@@ -1,0 +1,77 @@
+package server
+
+import (
+	"fmt"
+	"net"
+
+	"github.com/moeinht/http-protocol/handler"
+	"github.com/moeinht/http-protocol/request"
+	"github.com/moeinht/http-protocol/response"
+)
+
+func Listener(port int) (net.Listener, error) {
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+
+	if err != nil {
+		return l, err
+	}
+
+	return l, nil
+}
+
+func Server(l net.Listener, h handler.IHandler) error {
+	defer l.Close()
+
+	for {
+		con, err := l.Accept()
+
+		if err != nil {
+			return err
+		}
+
+		go handleConnetion(con, h)
+	}
+}
+
+func handleConnetion(con net.Conn, h handler.IHandler) {
+	defer con.Close()
+
+	parser := request.NewParser(con)
+
+	req, err := parser.Parse()
+	if err != nil {
+		fmt.Println(err)
+
+		res := response.NewResponse(400)
+		if err := writer(con, *res); err != nil {
+			fmt.Println(err)
+		}
+
+		return
+	}
+
+	res, err := h.Handler(req)
+
+	if err != nil {
+		fmt.Println(err)
+		errorResponse := response.NewResponse(500)
+		if err := writer(con, *errorResponse); err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+
+	if err := writer(con, res); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func writer(con net.Conn, res response.Response) error {
+	serializedResponse, err := res.Serialize()
+	if err != nil {
+		return err
+	}
+
+	_, err = con.Write(serializedResponse)
+	return err
+}
