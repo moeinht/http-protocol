@@ -1,10 +1,10 @@
 package request
 
 import (
-	"http-protocol/request/body"
-	"http-protocol/request/header"
-	"http-protocol/request/identifier"
-	requestline "http-protocol/request/request-line"
+	"github.com/moeinht/http-protocol/request/body"
+	"github.com/moeinht/http-protocol/request/header"
+	"github.com/moeinht/http-protocol/request/identifier"
+	requestline "github.com/moeinht/http-protocol/request/request-line"
 	"io"
 )
 

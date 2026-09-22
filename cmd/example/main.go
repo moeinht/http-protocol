@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"http-protocol/request"
-	"http-protocol/response"
 	"log"
 	"net"
+
+	"github.com/moeinht/http-protocol/request"
+	"github.com/moeinht/http-protocol/response"
 )
 
 func main() {

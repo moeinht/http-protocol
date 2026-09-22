@@ -1,9 +1,9 @@
 package response
 
 import (
-	"http-protocol/request/header"
-	"http-protocol/response/setGenerateHeader"
-	statusline "http-protocol/response/status-line"
+	"github.com/moeinht/http-protocol/request/header"
+	"github.com/moeinht/http-protocol/response/setGenerateHeader"
+	statusline "github.com/moeinht/http-protocol/response/status-line"
 	"strconv"
 	"strings"
 )
