@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"http-protocol/request"
+	"http-protocol/response"
 	"log"
 	"net"
 )
@@ -14,6 +15,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer l.Close()
 
 	con, err := l.Accept()
@@ -39,4 +41,19 @@ func main() {
 	for _, h := range req.Headers {
 		fmt.Println(h.Name, "=", h.Value)
 	}
+
+	response := response.NewResponse(200)
+
+	err = response.SetBody([]byte("hello"))
+	if err != nil {
+		panic(err)
+	}
+
+	writerValue, err := response.Serialize()
+
+	if err != nil {
+		panic(err)
+	}
+
+	con.Write(writerValue)
 }
