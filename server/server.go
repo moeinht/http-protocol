@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/moeinht/http-protocol/handler"
 	"github.com/moeinht/http-protocol/request"
 	"github.com/moeinht/http-protocol/response"
+	"github.com/moeinht/http-protocol/router"
 )
 
 func Listener(port int) (net.Listener, error) {
@@ -19,7 +19,7 @@ func Listener(port int) (net.Listener, error) {
 	return l, nil
 }
 
-func Server(l net.Listener, h handler.IHandler) error {
+func Server(l net.Listener, r *router.Router) error {
 	defer l.Close()
 
 	for {
@@ -29,11 +29,11 @@ func Server(l net.Listener, h handler.IHandler) error {
 			return err
 		}
 
-		go handleConnetion(con, h)
+		go handleConnetion(con, r)
 	}
 }
 
-func handleConnetion(con net.Conn, h handler.IHandler) {
+func handleConnetion(con net.Conn, r *router.Router) {
 	defer con.Close()
 
 	parser := request.NewParser(con)
@@ -50,7 +50,7 @@ func handleConnetion(con net.Conn, h handler.IHandler) {
 		return
 	}
 
-	res, err := h.Handler(req)
+	res, err := r.Handler(req)
 
 	if err != nil {
 		fmt.Println(err)

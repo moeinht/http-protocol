@@ -44,7 +44,7 @@ func (r *Router) Handler(req request.Request) (response.Response, error) {
 		if route.Method == method &&
 			route.Path == path {
 
-			return route.handler.Handler(req)
+			return route.handler(req)
 		}
 	}
 

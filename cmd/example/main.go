@@ -10,9 +10,7 @@ import (
 	"github.com/moeinht/http-protocol/server"
 )
 
-type HelloHandler struct{}
-
-func (HelloHandler) Handler(req request.Request) (response.Response, error) {
+func helloword(req request.Request) (response.Response, error) {
 	res := response.NewResponse(200)
 
 	if err := res.SetBody([]byte("Hello World")); err != nil {
@@ -22,9 +20,7 @@ func (HelloHandler) Handler(req request.Request) (response.Response, error) {
 	return *res, nil
 }
 
-type UserHandler struct{}
-
-func (UserHandler) Handler(req request.Request) (response.Response, error) {
+func users(req request.Request) (response.Response, error) {
 	res := response.NewResponse(200)
 
 	if err := res.SetBody([]byte("Users")); err != nil {
@@ -34,9 +30,7 @@ func (UserHandler) Handler(req request.Request) (response.Response, error) {
 	return *res, nil
 }
 
-type CreateUserHandler struct{}
-
-func (CreateUserHandler) Handler(req request.Request) (response.Response, error) {
+func createUser(req request.Request) (response.Response, error) {
 	res := response.NewResponse(201)
 
 	if err := res.SetBody([]byte("User Created")); err != nil {
@@ -49,9 +43,9 @@ func (CreateUserHandler) Handler(req request.Request) (response.Response, error)
 func main() {
 	r := router.NewRouter()
 
-	r.GET("/hello", HelloHandler{})
-	r.GET("/users", UserHandler{})
-	r.POST("/users", CreateUserHandler{})
+	r.GET("/hello", helloword)
+	r.GET("/users", users)
+	r.POST("/users", createUser)
 
 	listener, err := server.Listener(8000)
 	if err != nil {

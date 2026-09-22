@@ -5,13 +5,9 @@ import (
 	"github.com/moeinht/http-protocol/response"
 )
 
-type IHandler interface {
-	Handler(request request.Request) (response.Response, error)
-}
+type IHandler func(request request.Request) (response.Response, error)
 
-type MyHandler struct{}
-
-func (MyHandler) Handler(request request.Request) (response.Response, error) {
+func Handler(request request.Request) (response.Response, error) {
 	handlerResponse := response.NewResponse(200)
 
 	return *handlerResponse, nil
