@@ -1,11 +1,12 @@
 package request
 
 import (
+	"io"
+
 	"github.com/moeinht/http-protocol/request/body"
 	"github.com/moeinht/http-protocol/request/header"
 	"github.com/moeinht/http-protocol/request/identifier"
 	requestline "github.com/moeinht/http-protocol/request/request-line"
-	"io"
 )
 
 type Request struct {
