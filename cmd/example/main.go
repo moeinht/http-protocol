@@ -3,67 +3,64 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/moeinht/http-protocol/request"
 	"github.com/moeinht/http-protocol/response"
+	"github.com/moeinht/http-protocol/router"
+	"github.com/moeinht/http-protocol/server"
 )
 
-func main() {
-	l, err := net.Listen("tcp", ":8000")
-	fmt.Println("server has been started on port :8000")
+type HelloHandler struct{}
 
+func (HelloHandler) Handler(req request.Request) (response.Response, error) {
+	res := response.NewResponse(200)
+
+	if err := res.SetBody([]byte("Hello World")); err != nil {
+		return response.Response{}, err
+	}
+
+	return *res, nil
+}
+
+type UserHandler struct{}
+
+func (UserHandler) Handler(req request.Request) (response.Response, error) {
+	res := response.NewResponse(200)
+
+	if err := res.SetBody([]byte("Users")); err != nil {
+		return response.Response{}, err
+	}
+
+	return *res, nil
+}
+
+type CreateUserHandler struct{}
+
+func (CreateUserHandler) Handler(req request.Request) (response.Response, error) {
+	res := response.NewResponse(201)
+
+	if err := res.SetBody([]byte("User Created")); err != nil {
+		return response.Response{}, err
+	}
+
+	return *res, nil
+}
+
+func main() {
+	r := router.NewRouter()
+
+	r.GET("/hello", HelloHandler{})
+	r.GET("/users", UserHandler{})
+	r.POST("/users", CreateUserHandler{})
+
+	listener, err := server.Listener(8000)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer l.Close()
+	fmt.Println("server running on :8000")
 
-	for {
-
-		con, err := l.Accept()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		go handleConnection(con)
-
+	if err := server.Server(listener, r); err != nil {
+		log.Fatal(err)
 	}
-}
-
-func handleConnection(con net.Conn) {
-	defer con.Close()
-
-	parser := request.NewParser(con)
-
-	req, err := parser.Parse()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	fmt.Println("Method:", req.RequestLine.Method)
-	fmt.Println("Path:", req.RequestLine.Path)
-	fmt.Println("body:", string(req.Body))
-
-	for _, h := range req.Headers {
-		fmt.Println(h.Name, "=", h.Value)
-	}
-
-	response := response.NewResponse(200)
-
-	err = response.SetBody([]byte("hello"))
-	if err != nil {
-		panic(err)
-	}
-
-	writerValue, err := response.Serialize()
-
-	if err != nil {
-		panic(err)
-	}
-
-	(con).Write(writerValue)
-
 }
