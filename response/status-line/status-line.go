@@ -13,6 +13,7 @@ const (
 	InternalServerError = "Internal Server Error"
 	NoResponse          = "No Response"
 	BadRequest          = "Bad Request"
+	NotAllowed          = "Method Not Allowed"
 )
 
 func SetStatuscode(code int) ResponseLine {
@@ -24,25 +25,28 @@ func SetStatuscode(code int) ResponseLine {
 	switch code {
 	case 200:
 		responseLine.Reason = Ok
-		responseLine.Status = 200
+		responseLine.Status = code
 
 	case 201:
 		responseLine.Reason = Created
-		responseLine.Status = 201
+		responseLine.Status = code
 
 	case 404:
 		responseLine.Reason = NotFound
-		responseLine.Status = 404
+		responseLine.Status = code
 	case 400:
 		responseLine.Reason = BadRequest
-		responseLine.Status = 400
+		responseLine.Status = code
 
 	case 500:
 		responseLine.Reason = InternalServerError
-		responseLine.Status = 500
+		responseLine.Status = code
+	case 405:
+		responseLine.Reason = NotAllowed
+		responseLine.Status = code
 	default:
 		responseLine.Reason = NoResponse
-		responseLine.Status = 204
+		responseLine.Status = code
 	}
 
 	return responseLine
