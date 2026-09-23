@@ -36,6 +36,35 @@ func (r *Router) POST(path string, routeHandler handler.IHandler) {
 	r.Routes = append(r.Routes, route)
 }
 
+func (r *Router) PUT(path string, routeHandler handler.IHandler) {
+	route := Route{
+		Method:  "PUT",
+		Path:    path,
+		handler: routeHandler,
+	}
+
+	r.Routes = append(r.Routes, route)
+}
+
+func (r *Router) PATCH(path string, routeHandler handler.IHandler) {
+	route := Route{
+		Method:  "PATCH",
+		Path:    path,
+		handler: routeHandler,
+	}
+
+	r.Routes = append(r.Routes, route)
+}
+func (r *Router) DELETE(path string, routeHandler handler.IHandler) {
+	route := Route{
+		Method:  "DELETE",
+		Path:    path,
+		handler: routeHandler,
+	}
+
+	r.Routes = append(r.Routes, route)
+}
+
 func (r *Router) Handler(req request.Request) (response.Response, error) {
 	method := req.RequestLine.Method
 	path := req.RequestLine.Path
