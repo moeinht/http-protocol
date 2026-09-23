@@ -1,239 +1,303 @@
 # Own HTTP Protocol
 
-A simple HTTP/1.1-like protocol implementation written from scratch in Go.
+A simple HTTP/1.1-like server built from scratch in Go, without using `net/http`.
 
-The goal of this project is to understand how HTTP works at a lower level by implementing request parsing, response serialization, headers, bodies, and TCP communication without using Go's `net/http` package.
+The goal of this project is to understand what happens underneath an HTTP server by building the main pieces directly on top of TCP.
 
-## Features
+## 🎯 Goal
 
-- TCP-based communication
-- HTTP/1.1-style Request-Line parsing
-- HTTP method parsing
-- Path parsing
-- Header parsing
-- `Content-Length` support
-- Request body parsing
-- Response status line generation
-- Response headers
-- Response body handling
-- Response serialization
-- Basic `curl` compatibility
-
-## Architecture
+Instead of hiding HTTP behind a high-level framework, this project builds the protocol step by step:
 
 ```text
-Client (curl)
-      │
-      │ TCP
-      ▼
-┌───────────────┐
-│   TCP Server  │
-└───────┬───────┘
-        │
-        ▼
-┌──────────────────┐
-│  BufferedReader  │
-│                  │
-│  ReadLine()      │
-│  ReadN()         │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│      Parser      │
-│                  │
-│ Request-Line     │
-│ Headers          │
-│ Body             │
-└────────┬─────────┘
-         │
-         ▼
-      Request
-         │
-         │
-         ▼
-      Response
-         │
-         ▼
-     Serialize()
-         │
-         ▼
-      []byte
-         │
-         ▼
-     TCP Write()
-         │
-         ▼
-       curl
+TCP
+ ↓
+Buffered Reader
+ ↓
+HTTP Request Parser
+ ↓
+Router
+ ↓
+Handler
+ ↓
+HTTP Response
+ ↓
+TCP
 ```
 
-## Project Structure
+The focus is learning how HTTP works internally rather than building a production-ready web framework.
+
+## ✨ Features
+
+### TCP Server
+
+The server uses Go's `net` package directly to create a TCP listener and accept connections.
 
 ```text
-.
-├── README.md
-├── go.mod
-├── main.go
-├── request
-│   ├── body
-│   │   └── body.go
-│   ├── header
-│   │   └── header.go
-│   ├── identifier
-│   │   └── readline.go
-│   ├── request-line
-│   │   └── request-line.go
-│   └── request.go
-└── response
-    ├── response.go
-    ├── setGenerateHeader
-    │   └── setGenerateHeader.go
-    └── status-line
-        └── status-line.go
+Client
+   │
+   │ TCP
+   ▼
+Server
 ```
 
-## Request
+### Request Parsing
 
-A request contains three main components:
+The server parses HTTP requests including:
 
-```text
-Request
-├── Request-Line
-├── Headers
-└── Body
-```
+- Request-Line
+- Headers
+- Request Body
+- `Content-Length`
 
 Example:
 
 ```http
 POST /users HTTP/1.1
-Host: example.com
+Host: localhost:8000
 Content-Length: 5
 
 hello
 ```
 
-The request parser reads the TCP byte stream and builds a structured `Request`.
+### Buffered Reading
 
-## Response
+TCP is a byte stream, so the project includes a buffered reader to correctly handle data boundaries.
 
-A response contains:
+It supports:
 
-```text
-Response
-├── Status-Line
-├── Headers
-└── Body
-```
+- Reading lines
+- Reading an exact number of bytes
+- Preserving extra bytes for the next request
+
+This becomes especially important when multiple HTTP requests are sent over the same TCP connection.
+
+### Router
+
+The project includes a simple HTTP router with method and path matching.
+
+Supported methods:
+
+- GET
+- POST
+- PUT
+- PATCH
+- DELETE
 
 Example:
 
-```http
-HTTP/1.1 200 OK
-Content-Length: 5
-
-hello
+```go
+router.GET("/", handler)
+router.POST("/users", handler)
 ```
 
-The response is then serialized into bytes before being written to the TCP connection.
+### Dynamic Routes
 
-## Example
+Routes can contain parameters:
 
-Start the server:
+```text
+/users/:id
+```
+
+A request such as:
+
+```text
+/users/42
+```
+
+produces:
+
+```text
+id = 42
+```
+
+Route parameters are available through the request:
+
+```go
+request.Params
+```
+
+### Handler
+
+Handlers are represented as functions:
+
+```go
+type IHandler func(request request.Request) (response.Response, error)
+```
+
+This keeps request handling simple and allows the router to dispatch requests to user-defined handlers.
+
+### 404 / 405
+
+The router distinguishes between:
+
+- `404 Not Found` — no matching path
+- `405 Method Not Allowed` — path exists but the HTTP method is not supported
+
+### Concurrent Connections
+
+Each accepted TCP connection is handled independently using a goroutine.
+
+```text
+Client A ─────┐
+Client B ─────┼──> Server
+Client C ─────┘
+```
+
+Conceptually:
+
+```go
+go handleConnection(connection, router)
+```
+
+### Persistent Connections
+
+A single TCP connection can handle multiple HTTP requests:
+
+```text
+TCP Connection
+      │
+      ├── Request 1 → Response 1
+      ├── Request 2 → Response 2
+      ├── Request 3 → Response 3
+      └── Request 4 → Response 4
+```
+
+The server keeps parsing requests until the connection is closed.
+
+The client can explicitly request connection closure with:
+
+```http
+Connection: close
+```
+
+The server also handles a clean `io.EOF` when the client closes the connection.
+
+## 📁 Project Structure
+
+```text
+.
+├── handler/
+│   └── handler.go
+├── header/
+│   └── ...
+├── params/
+│   └── params.go
+├── request/
+│   └── ...
+├── requestline/
+│   └── ...
+├── response/
+│   └── ...
+├── router/
+│   └── ...
+├── server/
+│   └── ...
+├── statusline/
+│   └── ...
+└── main.go
+```
+
+The project is intentionally split into small packages so each part of the HTTP protocol can be understood independently.
+
+## 🚀 Running
+
+Clone the repository:
+
+```bash
+git clone https://github.com/moeinht/http-protocol.git
+cd http-protocol
+```
+
+Run the server:
 
 ```bash
 go run .
 ```
 
-Then send a request using `curl`:
+The server currently listens on port `8000`.
+
+You can test it with:
 
 ```bash
-curl -v -X POST http://localhost:8000/users \
-  -H "Host: example.com" \
-  -H "Content-Length: 5" \
-  -d "hello"
+curl -v http://localhost:8000/
 ```
 
-The server responds with:
+## 🧪 Testing Persistent Connections
 
-```text
-HTTP/1.1 200 OK
-Content-Length: 5
+For testing multiple requests over the same TCP connection, `nc` can be useful:
 
-hello
+```bash
+nc -v localhost 8000
 ```
 
-## Core Concepts
+Then send multiple HTTP requests without closing the connection:
 
-This project focuses on understanding the fundamentals behind HTTP and TCP communication.
+```http
+GET / HTTP/1.1
+Host: localhost:8000
 
-### TCP is a byte stream
+GET / HTTP/1.1
+Host: localhost:8000
 
-TCP does not preserve HTTP message boundaries. Data can arrive in fragments or multiple messages can arrive in a single read.
-
-The project therefore uses a buffered reader to handle:
-
-- Reading complete lines
-- Reading an exact number of bytes
-- Preserving unread bytes
-
-### Content-Length
-
-The request body is read according to the `Content-Length` header.
-
-For example:
-
-```text
-Content-Length: 5
-
-hello
 ```
 
-The parser reads exactly five bytes for the body.
+This allows you to observe multiple HTTP request/response cycles over a single TCP connection.
 
-### Serialization
+## 📌 Current Scope
 
-A `Response` is converted into bytes before being sent over TCP:
+The project currently focuses on the fundamentals of HTTP/1.1-style communication over TCP.
 
-```text
-Response
-   ↓
-Serialize()
-   ↓
-[]byte
-   ↓
-conn.Write()
-```
+Implemented:
 
-## Design Goals
+- TCP listener
+- HTTP request parsing
+- Request-Line parsing
+- Header parsing
+- `Content-Length`
+- Request body reading
+- Response serialization
+- Router
+- Static routes
+- Dynamic routes
+- Handler abstraction
+- Concurrent connections
+- Persistent connections
+- `Connection: close`
+- Basic `404` / `405` / `400` / `500` responses
 
-The main goal is educational: implement the basic mechanics of HTTP from the ground up and understand the relationship between HTTP and TCP.
+## 🛣️ Roadmap
 
-The project intentionally avoids Go's `net/http` package.
+Possible future improvements:
 
-## Current Limitations
+- Header validation and case-insensitive header handling
+- Better HTTP error handling
+- Connection timeouts
+- Middleware
+- More complete HTTP/1.1 semantics
+- Chunked Transfer Encoding
+- Improved routing precedence
+- More comprehensive protocol tests
 
-This is a learning project and is not intended to be a production HTTP server.
+## 📚 Why Build This?
 
-Current limitations include:
+The goal isn't to replace Go's `net/http`.
 
-- Limited HTTP methods
-- HTTP/1.1 only
-- Basic header validation
-- `Content-Length` based request bodies
-- Single TCP connection handling
-- No HTTP keep-alive implementation
-- No chunked transfer encoding
-- No TLS
-- No routing system
-- No production-level error handling
+The goal is to understand what happens underneath it.
 
-## Status
+Building the server from raw TCP makes concepts like:
 
-🚧 Work in progress.
+- TCP streams
+- buffering
+- message framing
+- connection lifecycle
+- request parsing
+- routing
+- persistent connections
 
-The project is being developed incrementally to explore HTTP, TCP, parsing, buffering, and serialization in Go.
+much easier to understand.
 
-## License
+---
 
-MIT License
+Built with Go 🐹
+
+Learning HTTP by building it from scratch.
