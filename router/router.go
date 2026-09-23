@@ -81,6 +81,7 @@ func (r *Router) Handler(req request.Request) (response.Response, error) {
 			}
 		}
 	}
+
 	if foundPath {
 		res := response.NewResponse(405)
 		return *res, nil

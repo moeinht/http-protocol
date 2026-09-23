@@ -58,9 +58,7 @@ func handleConnetion(con net.Conn, r *router.Router) {
 		}
 
 		res, err := r.Handler(req)
-
 		if err != nil {
-			fmt.Println(err)
 			errorResponse := response.NewResponse(500)
 			if err := writer(con, *errorResponse); err != nil {
 				fmt.Println(err)

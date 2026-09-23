@@ -1,17 +1,34 @@
 package response
 
 import (
+	"encoding/json"
+	"strconv"
+	"strings"
+
 	"github.com/moeinht/http-protocol/request/header"
 	"github.com/moeinht/http-protocol/response/setGenerateHeader"
 	statusline "github.com/moeinht/http-protocol/response/status-line"
-	"strconv"
-	"strings"
 )
 
 type Response struct {
 	StatusLine statusline.ResponseLine
 	Headers    []header.Header
 	Body       []byte
+}
+
+type HType map[string]any
+
+func (r *Response) H(value HType) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	if err := r.SetHeader("Content-Type", "application/json"); err != nil {
+		return err
+	}
+
+	return r.SetBody(data)
 }
 
 func (rs *Response) GetHeader(name string) (string, bool) {
@@ -28,6 +45,13 @@ func (rs *Response) SetHeader(name string, value string) error {
 	generatedHeader, err := setGenerateHeader.Generate(name, value)
 	if err != nil {
 		return err
+	}
+
+	for i := range rs.Headers {
+		if strings.EqualFold(rs.Headers[i].Name, generatedHeader.Name) {
+			rs.Headers[i].Value = generatedHeader.Value
+			return nil
+		}
 	}
 
 	rs.Headers = append(rs.Headers, generatedHeader)
@@ -62,7 +86,11 @@ func (rs *Response) Serialize() ([]byte, error) {
 }
 
 func NewResponse(code int) *Response {
-	return &Response{
+	res := &Response{
 		StatusLine: statusline.SetStatuscode(code),
 	}
+
+	res.SetHeader("Content-Length", "0")
+
+	return res
 }

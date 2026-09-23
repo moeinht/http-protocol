@@ -12,9 +12,11 @@ import (
 
 func helloword(req request.Request) (response.Response, error) {
 	res := response.NewResponse(200)
-	res.SetHeader("Content-type", "application/json")
 
-	if err := res.SetBody([]byte("{'message' :'Hello World'}")); err != nil {
+	if err := res.H(response.HType{
+		"message": "hello",
+		"status":  "ok",
+	}); err != nil {
 		return response.Response{}, err
 	}
 

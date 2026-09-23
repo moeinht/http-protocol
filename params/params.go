@@ -1,6 +1,8 @@
 package params
 
-import "strings"
+import (
+	"strings"
+)
 
 type Params map[string]string
 
@@ -11,6 +13,7 @@ func Match(routePath, requestPath string) (bool, Params) {
 	if len(routeParts) != len(requestParts) {
 		return false, nil
 	}
+
 	params := make(Params)
 	for i := 0; i < len(routeParts); i++ {
 		requestPart := requestParts[i]
@@ -30,7 +33,6 @@ func Match(routePath, requestPath string) (bool, Params) {
 			params[key] = requestPart
 			continue
 		}
-
 		return false, nil
 	}
 

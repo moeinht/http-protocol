@@ -1,5 +1,0 @@
-package h
-
-func JSON() {
-
-}
