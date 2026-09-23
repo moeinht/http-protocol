@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/moeinht/http-protocol/handler"
+	"github.com/moeinht/http-protocol/params"
 	"github.com/moeinht/http-protocol/request"
 	"github.com/moeinht/http-protocol/response"
 )
@@ -10,6 +11,7 @@ type Route struct {
 	Method  string
 	Path    string
 	handler handler.IHandler
+	Params  params.Params
 }
 
 type Router struct {
@@ -71,9 +73,10 @@ func (r *Router) Handler(req request.Request) (response.Response, error) {
 
 	foundPath := false
 	for _, route := range r.Routes {
-		if route.Path == path {
+		if isMatch, params := params.Match(route.Path, path); isMatch {
 			foundPath = true
 			if route.Method == method {
+				req.Params = params
 				return route.handler(req)
 			}
 		}

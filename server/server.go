@@ -1,7 +1,9 @@
 package server
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 
 	"github.com/moeinht/http-protocol/request"
@@ -38,31 +40,42 @@ func handleConnetion(con net.Conn, r *router.Router) {
 
 	parser := request.NewParser(con)
 
-	req, err := parser.Parse()
-	if err != nil {
-		fmt.Println(err)
+	for {
+		req, err := parser.Parse()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return
+			}
 
-		res := response.NewResponse(400)
-		if err := writer(con, *res); err != nil {
 			fmt.Println(err)
+
+			res := response.NewResponse(400)
+			if err := writer(con, *res); err != nil {
+				fmt.Println(err)
+			}
+
+			return
 		}
 
-		return
-	}
+		res, err := r.Handler(req)
 
-	res, err := r.Handler(req)
-
-	if err != nil {
-		fmt.Println(err)
-		errorResponse := response.NewResponse(500)
-		if err := writer(con, *errorResponse); err != nil {
+		if err != nil {
 			fmt.Println(err)
+			errorResponse := response.NewResponse(500)
+			if err := writer(con, *errorResponse); err != nil {
+				fmt.Println(err)
+			}
+			return
 		}
-		return
-	}
 
-	if err := writer(con, res); err != nil {
-		fmt.Println(err)
+		if err := writer(con, res); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		if connection, exist := req.GetHeader("Connection"); connection == "close" && exist {
+			return
+		}
 	}
 }
 

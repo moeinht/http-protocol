@@ -2,6 +2,7 @@ package request
 
 import (
 	"io"
+	"strings"
 
 	"github.com/moeinht/http-protocol/request/body"
 	"github.com/moeinht/http-protocol/request/header"
@@ -13,6 +14,17 @@ type Request struct {
 	RequestLine requestline.RequestLine
 	Headers     []header.Header
 	Body        []byte
+	Params      map[string]string
+}
+
+func (r *Request) GetHeader(name string) (string, bool) {
+	for _, h := range r.Headers {
+		if strings.EqualFold(h.Name, name) {
+			return h.Value, true
+		}
+	}
+
+	return "", false
 }
 
 type Parser struct {

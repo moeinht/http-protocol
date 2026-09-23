@@ -12,8 +12,9 @@ import (
 
 func helloword(req request.Request) (response.Response, error) {
 	res := response.NewResponse(200)
+	res.SetHeader("Content-type", "application/json")
 
-	if err := res.SetBody([]byte("Hello World")); err != nil {
+	if err := res.SetBody([]byte("{'message' :'Hello World'}")); err != nil {
 		return response.Response{}, err
 	}
 
@@ -23,7 +24,7 @@ func helloword(req request.Request) (response.Response, error) {
 func users(req request.Request) (response.Response, error) {
 	res := response.NewResponse(200)
 
-	if err := res.SetBody([]byte("Users")); err != nil {
+	if err := res.SetBody([]byte(fmt.Sprintf("userId:%v and postId:%v", req.Params["userId"], req.Params["postId"]))); err != nil {
 		return response.Response{}, err
 	}
 
@@ -44,7 +45,7 @@ func main() {
 	r := router.NewRouter()
 
 	r.GET("/hello", helloword)
-	r.GET("/users", users)
+	r.GET("/users/:userId/posts/:postId", users)
 	r.POST("/users", createUser)
 
 	listener, err := server.Listener(8000)
