@@ -2,8 +2,9 @@ package router
 
 import (
 	"github.com/moeinht/http-protocol/handler"
-	"github.com/moeinht/http-protocol/params"
+	"github.com/moeinht/http-protocol/middleware"
 	"github.com/moeinht/http-protocol/request"
+	"github.com/moeinht/http-protocol/request/params"
 	"github.com/moeinht/http-protocol/response"
 )
 
@@ -15,7 +16,8 @@ type Route struct {
 }
 
 type Router struct {
-	Routes []Route
+	Routes     []Route
+	Middleware *middleware.Chain
 }
 
 func (r *Router) GET(path string, routeHandler handler.IHandler) {
@@ -77,7 +79,8 @@ func (r *Router) Handler(req request.Request) (response.Response, error) {
 			foundPath = true
 			if route.Method == method {
 				req.Params = params
-				return route.handler(req)
+				h := r.Middleware.Then(route.handler)
+				return h(req)
 			}
 		}
 	}
@@ -93,5 +96,8 @@ func (r *Router) Handler(req request.Request) (response.Response, error) {
 }
 
 func NewRouter() *Router {
-	return &Router{}
+	return &Router{
+		Routes:     []Route{},
+		Middleware: middleware.New(),
+	}
 }

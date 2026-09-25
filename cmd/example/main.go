@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/moeinht/http-protocol/middleware/builtin"
 	"github.com/moeinht/http-protocol/request"
 	"github.com/moeinht/http-protocol/response"
 	"github.com/moeinht/http-protocol/router"
@@ -45,6 +46,7 @@ func createUser(req request.Request) (response.Response, error) {
 
 func main() {
 	r := router.NewRouter()
+	r.Middleware.Use(builtin.Logger)
 
 	r.GET("/hello", helloword)
 	r.GET("/users/:userId/posts/:postId", users)
