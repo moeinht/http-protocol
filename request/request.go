@@ -7,6 +7,8 @@ import (
 	"github.com/moeinht/http-protocol/request/body"
 	"github.com/moeinht/http-protocol/request/header"
 	"github.com/moeinht/http-protocol/request/identifier"
+	"github.com/moeinht/http-protocol/request/params"
+	"github.com/moeinht/http-protocol/request/queries"
 	requestline "github.com/moeinht/http-protocol/request/request-line"
 )
 
@@ -14,7 +16,8 @@ type Request struct {
 	RequestLine requestline.RequestLine
 	Headers     []header.Header
 	Body        []byte
-	Params      map[string]string
+	Params      params.Params
+	Queries     queries.Query
 }
 
 func (r *Request) GetHeader(name string) (string, bool) {
@@ -91,6 +94,12 @@ func (p *Parser) Parse() (Request, error) {
 		return Request{}, err
 	}
 
+	queriesMap, err := queries.Parse(requestLine.Path)
+
+	if err != nil {
+		return Request{}, err
+	}
+
 	headers, err := p.ParseHeaders()
 	if err != nil {
 		return Request{}, err
@@ -106,5 +115,6 @@ func (p *Parser) Parse() (Request, error) {
 		RequestLine: requestLine,
 		Headers:     headers,
 		Body:        body,
+		Queries:     queriesMap,
 	}, nil
 }

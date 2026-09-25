@@ -13,9 +13,10 @@ import (
 
 func helloword(req request.Request) (response.Response, error) {
 	res := response.NewResponse(200)
+	queries := req.Queries
 
 	if err := res.H(response.HType{
-		"message": "hello",
+		"message": fmt.Sprintf("hello %v", queries["name"][0]),
 		"status":  "ok",
 	}); err != nil {
 		return response.Response{}, err

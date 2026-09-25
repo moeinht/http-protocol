@@ -7,6 +7,8 @@ import (
 type Params map[string]string
 
 func Match(routePath, requestPath string) (bool, Params) {
+	indexQuery := strings.Index(requestPath, "?")
+	requestPath = requestPath[:indexQuery]
 	requestParts := strings.Split(requestPath, "/")
 	routeParts := strings.Split(routePath, "/")
 
